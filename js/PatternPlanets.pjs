@@ -1,0 +1,649 @@
+/******************************************************************************* 
+ * 
+ * Copyright 2012 Bess Siegal
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************************/
+
+var RADIUS = 50;
+var RAINBOW = [1, 0.0835, 0.167, 0.33, 0.67, 0.83];
+var RAINBOW_KEYS = [['R','r','1'], ['O','o','2'], ['Y','y','3'], ['G','g','4'], ['B','b','5'], ['P','p','V','v','6']];
+var CONTRAST_COLOR = 'gray'; //'#CFCDC6';
+var PADDING = 10;
+var BALL_BANK_START = new Point(RADIUS + 5, 2 * RADIUS);
+var BANK_NEXT_VECTOR = new Point(2 * RADIUS + PADDING, 0);
+var SHRINK = 'SHRRINK';
+var BOUNCE = 'BOUNCE';
+var HOORAY = 'HOORAY';
+var PATH_MAX_WIDTH = view.size.width - RADIUS * 4 - PADDING * 2;
+var PATH_MAX_HEIGHT = view.size.height - RADIUS * 5 - 50;
+var OVAL_START = BALL_BANK_START + new Point(0, 2 * RADIUS + 10);
+var RANDOM = 'random';
+var CUSTOM = 'custom';
+
+function Ball(/* Point */point, /* float */hue) {
+    this.point = point;
+    this.radius = RADIUS;
+    this.hue = hue;
+    
+    this.init = function() {
+        var overlayPos = this.point - this.radius / 3;
+        var compound = new CompoundPath([
+            new Path.Circle(this.point, this.radius),
+            new Path.Circle(overlayPos, this.radius / 100)
+        ]);
+        var color = new HsbColor(this.hue * 360, 1, 1);
+        var gradient = new Gradient([color, CONTRAST_COLOR], 'radial');
+        compound.children[0].fillColor = new GradientColor(gradient, this.point,
+                this.point + this.radius, overlayPos);
+        var overlay = new Path.Circle(overlayPos, this.radius / 100);
+        var overlayColor = color.clone();
+        var fullOverlay = color.clone();
+        overlayColor.alpha = 0.5;
+        var overlayGradient = new Gradient([new RgbColor(1, 1, 1, 0.5), new RgbColor(1, 1, 1, 1)]);
+        overlay.fillColor = new GradientColor(overlayGradient, overlayPos, overlayPos + this.radius / 2);
+        
+        this.overlay = overlay;
+        this.group = new Group([compound, overlay]);   
+        this.item = compound;        
+    };
+}
+
+function PlaceHolder(/* Point */point) {
+    this.point = point;
+    this.init = function() {
+        var circle = new Path.Circle(point, RADIUS);
+        circle.strokeColor = CONTRAST_COLOR;
+        circle.strokeWidth = 5;
+        circle.fillColor = 'white';
+        
+        var text = new PointText(point);
+        text.strokeColor = circle.strokeColor;
+        text.strokeWidth = circle.strokeWidth;
+        text.content = '?';
+        text.characterStyle = {fontSize: 50, fillColor: circle.strokeColor};
+        text.paragraphStyle.justification = 'center';
+        text.position = text.position + new Point(0, text.characterStyle.fontSize / 2);
+        
+        this.circle = circle;
+        this.text = text;
+        this.group = new Group(circle, text);
+    };
+    
+    this.move = function(/* Point */point) {
+        this.point = point;
+        this.circle.position = point;
+        this.text.position = point + new Point(0, this.text.characterStyle.fontSize / 2);
+
+    };
+    
+    this.toFront = function() {
+        /*
+         * moveAbove doesn't work for me predictably
+         * so I'm just going to recreate
+         */
+        this.group.remove();
+        this.init();
+        this.move(this.point);
+    };
+
+    this.setVisible = function(/* boolean */visible) {
+        this.circle.visible = visible;
+        this.text.visible = visible;
+    };
+}
+
+/** all the functions and member variables except for mouse handlers */
+var pjs = {
+    /* Path.RoundRectangle of container and bank balls */
+    bank: null,
+    /* array of Ball objects for the bank */
+    ballBank: [],
+    /* Path.Oval where the pattern and played Balls should follow */
+    patternPath: null,
+    /* array of Ball objects for the pattern */
+    pattern: [],
+    /* array of Ball objects user chose to play */
+    played: [],
+    /* PlaceHolder object */
+    placeHolder: null,
+    /* the current Ball object for mouse event */
+    currBall: null,
+    /* Point where an invalid Ball should return */
+    sendBackPoint: null,
+    /* String indicator for showing which animation */
+    anim: null,
+    /* int of how long the played array should be when done */
+    complete: null,
+    /* int increment of how to move the planets around when complete */
+    animOffset: 0,
+    /* what is shown on success */
+    star: null,
+    /**
+     * Initialize
+     */
+    init: function() {
+        /*
+         * Define this scope so PatternPlanets and pjs
+         * can communicate with each other.
+         */
+        PaperScope.each(function(/*PaperScope*/ scope) {
+            if (scope.project) {
+                PatternPlanets.scope = scope;
+                
+                PatternPlanets.playAgain = function() {
+                    pjs.playAgain();
+                    PatternPlanets.draw();
+                };
+                
+            }
+        });
+        
+        PatternPlanets.init();
+        
+        pjs.createBallBank();
+        pjs.playAgain();
+        
+    },
+    
+    playAgain: function() {
+        if (PatternPlanets.mode === RANDOM) {
+            pjs.createPattern();
+        } else {
+            pjs.customPattern();
+        }
+    },
+    /**
+     * Create the ball bank
+     */
+    createBallBank: function() {
+        /*
+         * rectangle area for the shape bank
+         */
+        var rectPoint = new Point(0, 0);
+        var size = new Size(RADIUS * 2 * 6 + PADDING * 7, RADIUS * 2 + PADDING * 2);
+        var rect = new Rectangle(rectPoint, size);
+        var container = new Path.RoundRectangle(rect, 10);
+        container.strokeColor = 'darkgray';
+        container.fillColor = 'lightgray';
+        pjs.bank = container;
+        
+        /*
+         * draw the bank of balls
+         */
+        var point = rectPoint + new Point(PADDING + RADIUS, PADDING + RADIUS);
+        for (var i = 0; i < RAINBOW.length; i++) {
+            var ball = new Ball(point, RAINBOW[i]);
+            ball.init();
+                     
+            pjs.ballBank.push(ball); 
+            point += BANK_NEXT_VECTOR;
+            pjs.bank.addChild(ball);
+        }
+        
+        pjs.centerBank();
+    },
+
+    /**
+     * Remove old pattern if exists
+     */
+    resetPattern: function() {
+        pjs.createPatternPath();
+        
+        /*
+         * clear any old pattern
+         * and any played and any hooray message
+         */
+        for (var i = 0; i < pjs.pattern.length; i++) {
+            pjs.pattern[i].group.remove();
+        }
+        pjs.pattern = [];
+        for (var i = 0; i < pjs.played.length; i++) {
+            pjs.played[i].group.remove();
+        }
+        pjs.played = [];
+        PatternPlanets.showHooray(false);
+        if (pjs.star && pjs.star.remove()) {
+            pjs.star = null;
+        }
+        pjs.animOffset = 1;
+        pjs.stopAnim();
+    },
+    
+    customPattern: function() {
+        pjs.resetPattern();
+        /*
+         * put the placeHolder in place
+         */
+        if (!pjs.placeHolder) {
+            pjs.placeHolder = new PlaceHolder(pjs.calcPatternPoint(0, 0));
+            pjs.placeHolder.init();
+        } else {
+            pjs.placeHolder.move(pjs.calcPatternPoint(0, 0));
+            pjs.placeHolder.toFront();
+            pjs.placeHolder.setVisible(true);
+        }
+    },
+    
+    /**
+     * create a new pattern
+     * and add a place holder
+     */
+    createPattern: function() {
+        pjs.resetPattern();
+        
+        /*
+         * Start the pattern -- it should be at least 2 balls long
+         */
+        var pattLen = PatternPlanets.level;        
+        
+        for (var i = 0; i < pattLen; i++) {
+            /*
+             * Generate a random number between 0 and 5
+             * to get an index for a rainbow hue
+             */
+            var index = Math.floor(Math.random() * 6);
+            var ball = new Ball(pjs.calcPatternPoint(i, 0), RAINBOW[index]);
+            ball.init();
+                     
+            pjs.pattern.push(ball);             
+        }
+        
+        /*
+         * if all the member of the pattern have the
+         * same hue, it can't be considered a pattern.  so regenerate...
+         */
+        var hue = pjs.pattern[0].hue;
+        var allSame = true;
+        for (var i = 1; i < pattLen; i++) {
+            if (pjs.pattern[i].hue !== hue) {
+                allSame = false;
+                break;
+            }
+        }
+        if (allSame) {
+            pjs.createPattern();
+        } else {
+            /*
+             * repeat the pattern once
+             * so user can see the pattern.
+             */
+            for (var i = 0; i < pattLen; i++) {
+                var ball = new Ball(pjs.calcPatternPoint(i + pattLen, 0), pjs.pattern[i].hue);
+                ball.init();
+                pjs.pattern.push(ball);                
+            }
+            /*
+             * put the placeHolder in place
+             */
+            var fullLen = pjs.pattern.length;
+            if (!pjs.placeHolder) {
+                pjs.placeHolder = new PlaceHolder(pjs.calcPatternPoint(fullLen, 0));
+                pjs.placeHolder.init();
+            } else {
+                pjs.placeHolder.move(pjs.calcPatternPoint(fullLen, 0));
+                pjs.placeHolder.toFront();
+                pjs.placeHolder.setVisible(true);
+            }
+
+        }                
+    },
+    
+    createPatternPath: function() {
+        /*
+         * clear any old patternPath
+         */
+        if (pjs.patternPath) {
+            pjs.patternPath.remove();
+        }
+        var pattLen = PatternPlanets.level;        
+        pjs.complete = pattLen * 4;
+        
+        /*
+         * Based on the length of complete played + pattern,
+         * figure out an oval path that will fit all the balls.
+         *  _ _
+         * |_ _|  where each line is a pattLen
+         */
+        var total = pattLen * 6;
+        
+        var topLeft = OVAL_START;
+        /*
+         * width of the rectangle is 2 * pattLen * RADIUS * 2
+         * height of the rectangle is 1 * pattLen * RADIUS * 2
+         * 
+         * if width/height are bigger than the canvas allows, make it max
+         */
+        var width = 4 * pattLen * RADIUS;
+        var height = 2 * pattLen * RADIUS;
+        if (width > PATH_MAX_WIDTH) {
+            width = PATH_MAX_WIDTH;
+        }
+        if (height > PATH_MAX_HEIGHT) {
+            height = PATH_MAX_HEIGHT;
+        }
+        var size = new Size(width, height);
+        var rectangle = new Rectangle(topLeft, size);
+        var path = new Path.Oval(rectangle);
+        path.clockwise = false;
+        path.strokeColor = CONTRAST_COLOR;
+        path.strokeWidth = 5;
+        pjs.patternPath = path;
+        
+        pjs.centerPatternPath();
+    },
+
+    calcPatternPoint: function(/*int*/ index, /*int*/ offset) {
+        /*
+         * follow the patternPath
+         */
+        var distance = index * pjs.patternPath.length / (pjs.pattern.length + pjs.complete);
+
+        var offsetDistance = offset * RADIUS / 16;
+        distance += offsetDistance;
+        if (distance > pjs.patternPath.length) {
+            distance = distance % pjs.patternPath.length;
+        }
+        return pjs.patternPath.getPointAt(distance);
+    },
+    
+    
+    centerBank: function() {
+        var centerX = view.size.width / 2;
+        var vector = new Point(centerX, RADIUS + PADDING) - pjs.bank.position; 
+        pjs.bank.position.x = centerX;
+        for (var i = 0; i < pjs.ballBank.length; i++) {
+            pjs.ballBank[i].group.position += vector;
+            pjs.ballBank[i].point = pjs.ballBank[i].group.position; 
+        }
+    },
+    
+    centerPatternPath: function() {
+        var centerX = view.size.width / 2;
+        pjs.patternPath.position.x = centerX;
+        
+        for (var i = 0; i < pjs.pattern.length; i++) {
+            pjs.pattern[i].group.position = pjs.calcPatternPoint(i, 0);
+        }
+        
+        for (var i = 0; i < pjs.played.length; i++) {
+            pjs.played[i].group.position = pjs.calcPatternPoint(i + pjs.pattern.length, 0);
+        }
+        
+        var fullLen = pjs.pattern.length + pjs.played.length;
+        if (pjs.placeHolder && fullLen > 0 && pjs.played.length < pjs.complete) {
+            pjs.placeHolder.move(pjs.calcPatternPoint(fullLen, 0));
+            pjs.placeHolder.toFront();
+            pjs.placeHolder.setVisible(true);            
+        }
+
+    },
+    
+    /**
+     * Create what will be shown when player finishes.
+     */
+    createHooray: function(/*Point*/ point) {
+        var star = new Path.Star(point, 5, 4 * RADIUS / 3, RADIUS * 2);
+        star.rotate(36);
+        star.fillColor = '#FFF44F';
+        return star;
+    },
+    
+    /**
+     * Return true if the last ball in the played array
+     * fits the pattern
+     */
+    validPlay: function() {
+        console.log('validPlay called');
+        var valid = false;
+        /*
+         * length of played would be the index of the currBall
+         */
+        var index = pjs.played.length;
+        var hue = pjs.currBall.hue;
+        /*
+         * index % length of pattern is the 
+         * index of the ball to check
+         */
+        var patternIndex = index % pjs.pattern.length;
+        if (hue === pjs.pattern[patternIndex].hue) {
+            valid = true;
+            PatternPlanets.playValid();
+        }
+        
+        return valid;
+    },
+    
+    startAnim: function(/*String*/ anim) {
+        pjs.anim = anim;
+        if (anim === SHRINK) {
+            PatternPlanets.playMiss();
+        } else if (anim === BOUNCE) {
+            PatternPlanets.playInvalid();
+        } else if (anim === HOORAY) {
+            PatternPlanets.playHooray();
+        }
+        // TODO change mouse pointer
+    },
+    
+    stopAnim: function() {
+        pjs.currBall = null;
+        pjs.anim = null;
+        // TODO change mouse pointer back
+    },
+    
+    cloneBall: function(/*Point*/ startPoint, /*int*/ i) {
+        var ball = new Ball(startPoint, pjs.ballBank[i].hue);
+        ball.init();
+        
+        pjs.currBall = ball;
+        pjs.sendBackPoint = pjs.ballBank[i].point;    
+    },
+    
+    playBall: function(/*HitResult or just boolean test*/ hitResult) {
+        if (hitResult) {
+            if (PatternPlanets.mode === CUSTOM && pjs.pattern.length < PatternPlanets.level) {
+                /*
+                 * set the current ball to where the place holder was
+                 */
+                pjs.currBall.group.position = pjs.placeHolder.point;
+                pjs.pattern.push(pjs.currBall);                
+                
+                pjs.placeHolder.move(pjs.calcPatternPoint(pjs.pattern.length, 0));
+                pjs.placeHolder.toFront();
+                pjs.currBall = null;
+
+            } else if (pjs.validPlay()) {
+                /*
+                 * set the current ball to where the place holder was
+                 */
+                pjs.currBall.group.position = pjs.placeHolder.point;
+                pjs.played.push(pjs.currBall);
+                
+                /*
+                 * either show hooray animatino or
+                 * move the place holder
+                 */
+                console.log('onMouseUp: pjs.played.length = ' + pjs.played.length + '; pjs.complete = ' + pjs.complete);
+                if (pjs.played.length === pjs.complete) {
+                    pjs.placeHolder.setVisible(false);
+                    pjs.star = pjs.createHooray(pjs.patternPath.position);
+                    PatternPlanets.showHooray(true, pjs.star.position.x, pjs.star.position.y);
+                    pjs.startAnim(HOORAY);
+
+                } else {
+                    pjs.placeHolder.move(pjs.calcPatternPoint(pjs.pattern.length + pjs.played.length, 0));
+                    pjs.placeHolder.toFront();
+                    pjs.currBall = null;
+                }
+                
+                
+            } else {
+                /*
+                 * start animation of it moving back 
+                 */
+                pjs.startAnim(BOUNCE);
+                
+            }       
+        } else {
+            /*
+             * start animation of it shrinking to disappear
+             */
+            pjs.startAnim(SHRINK);
+        }    
+    },
+    
+    mouseDown: function(event) {
+        console.log("pjs.mouseDown pjs.currBall="+pjs.currBall + "; pjs.anim = " + pjs.anim);
+        /*
+         * can't do anything until the animation is done
+         */
+        if (pjs.currBall || pjs.anim) {
+            return;
+        }
+
+        var hitResult = project.hitTest(event.point);
+        if (hitResult && hitResult.item) {
+            for (var i = 0; i < pjs.ballBank.length; i++) {
+                if (pjs.ballBank[i].item.children[0] === hitResult.item || pjs.ballBank[i].item.children[1] === hitResult.item) {
+                    pjs.cloneBall(pjs.ballBank[i].point, i);
+                    break;
+                }
+            }
+        }
+    },
+    
+    mouseDrag: function(event) {
+        if (pjs.currBall && !pjs.anim) {
+            pjs.currBall.group.position = event.point;
+        }
+    },
+    
+    mouseUp: function(event) {
+        /*
+         * Perform a hit test against the placeHolder.
+         * If it's CUSTOM mode and the pattern length hasn't been reached yet,
+         * or if it's a hit and it matches the pattern,
+         * then drop it and move the placeHolder
+         */
+        var hitResult = pjs.placeHolder.group.hitTest(event.point);
+        pjs.playBall(hitResult);            
+    }
+
+};
+
+function onFrame(event) {
+    if (pjs.currBall) {
+        if (pjs.anim === BOUNCE) {
+            
+            var vector = pjs.currBall.group.position - pjs.sendBackPoint;
+            pjs.currBall.group.position -= vector/10;
+            
+            if (vector.length < RADIUS/10) {
+                pjs.currBall.group.remove();
+                
+                pjs.stopAnim();
+            }
+            
+        } else if (pjs.anim === SHRINK) {
+            
+            pjs.currBall.group.scale(0.7);
+            
+            if (pjs.currBall.group.bounds.width <= 0.5) {
+                pjs.currBall.group.remove();
+                
+                pjs.stopAnim();
+            }
+            
+        } else if (pjs.anim === HOORAY) {
+            /*
+             * move all the balls an offset over
+             */
+            pjs.animOffset++;
+            for (var i = 0; i < pjs.pattern.length; i++) {
+                pjs.pattern[i].group.position = pjs.calcPatternPoint(i, pjs.animOffset);                
+            }
+            for (var i = 0; i < pjs.played.length; i++) {
+                pjs.played[i].group.position = pjs.calcPatternPoint(pjs.pattern.length + i, pjs.animOffset);                
+            }
+            
+        }
+    } 
+}
+
+function onMouseDown(event) {
+    pjs.mouseDown(event);
+}
+
+function onMouseDrag(event) {
+    if (PatternPlanets.mobile) {
+        /*
+         * The touch events don't perform
+         * as well, so not drag on mobile
+         */
+        return;
+    }
+    pjs.mouseDrag(event);
+}
+
+function onMouseUp(event) {
+    if (pjs.currBall && !pjs.anim) {
+        if (PatternPlanets.mobile) {
+            /*
+             * The touch events don't perform
+             * as well, so on mobile, you don't need to
+             * get the target, you can just 'tap.'
+             */
+            pjs.playBall(true);
+        } else {
+            pjs.mouseUp(event);        
+        }
+    }
+}
+
+function onKeyUp(event) {
+    /*
+     * can't do anything until the animation is done
+     */
+    if (pjs.currBall || pjs.anim) {
+        return;
+    }
+    
+    /*
+     * If player types valid key for the color
+     * that works, too.
+     */
+    var c = event.character;
+    for (var i = 0; i < RAINBOW_KEYS.length; i++) {
+        /*
+         * test each character
+         */
+        for (var j = 0; j < RAINBOW_KEYS[i].length; j++) {
+            if (c === RAINBOW_KEYS[i][j]) {
+                pjs.cloneBall(pjs.placeHolder.point, i);
+                pjs.playBall(true);
+
+                return;
+            }
+        }
+    }
+    
+}
+
+function onResize(event) {
+    pjs.centerBank();
+    pjs.centerPatternPath();
+}
+
+pjs.init();

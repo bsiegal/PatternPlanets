@@ -1,0 +1,81 @@
+body {    
+    background-color: black;
+    color: lightgray;
+    font-size: medium;
+}
+
+h1 {
+    text-align: center;
+}
+
+#title {
+    position: relative;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#title span {
+    font-size: 32px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.rightMenu {
+    position: absolute;
+    right: 0px;
+}
+
+#instruct {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+#PatternPlanetsCanvas {
+    padding: 5px;
+}
+
+.success {
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    color: black;
+}
+
+#buttonBar {
+    position: absolute;
+    z-index: 2; 
+    text-align: center;
+}
+
+button {    
+    padding: 5px;
+}
+
+#about {
+    position: absolute;
+    right: 54px;
+    top: 37px;
+    z-index: 3;
+    background-color: black; 
+    border: thin solid darkgray;
+    -moz-border-radius: 10px; 
+    -webkit-border-radius: 10px; 
+    border-radius: 10px;
+    -moz-box-shadow: 10px 10px 5px #888;
+    -webkit-box-shadow: 10px 10px 5px #888;
+    box-shadow: 10px 10px 5px #888;    
+    padding: 10px;
+    width: 500px;
+    text-align: left; 
+}
+
+a, a:visited {
+    text-decoration: none;
+    font-style: italic;
+    color: lightblue;
+    font-size: medium;
+}
+
+.mobile {
+    display: none;
+}
