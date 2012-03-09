@@ -13,5 +13,5 @@ How to play
 * When you are done, all the planets will orbit around a star.  Of course, this would make for a terrible solar system since they are all on the same orbit.
 * You may create your own pattern by changing the option in the select box.
 
-**Play at [bsiegal.github.com/ShapeEquate](http://bsiegal.github.com/PatternPlanets).**
+**Play at [bsiegal.github.com/PatternPlanets](http://bsiegal.github.com/PatternPlanets).**
 
