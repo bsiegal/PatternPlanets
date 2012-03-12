@@ -1,7 +1,7 @@
 Pattern Planets
 ==================================================
 
-This is a pattern game for kids created with [Paper.js](http://paperjs.org/).  It can be played using any HTML5 browser, including on an iPad, but the interaction is different on the iPad.  This project has simple examples of using group, color gradient, handling mouse, keyboard and canvas-resize events, cloning, changing position, animating movement, and integrating JavaScript code outside of PaperScript with PaperScript.  Also, it has an example of using HTML5 audio tag for sound effects, , which are suppressed on the iPad because they are too slow there.
+This is a pattern game for kids created with [Paper.js](http://paperjs.org/).  It can be played using any HTML5 browser, including on an iPad, but the interaction is different on the iPad.  This project has simple examples of using group, color gradient, handling mouse, keyboard and canvas-resize events, cloning, changing position, animating movement, and integrating JavaScript code outside of PaperScript with PaperScript.  Also, it has an example of using HTML5 audio tag for sound effects, which are suppressed on the iPad because they are too slow there.
 
 How to play
 --------------------------------------
