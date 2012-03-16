@@ -405,7 +405,7 @@ var pjs = {
      * fits the pattern
      */
     validPlay: function() {
-        console.log('validPlay called');
+        if (console && console.log) console.log('validPlay called');
         var valid = false;
         /*
          * length of played would be the index of the currBall
@@ -475,7 +475,7 @@ var pjs = {
                  * either show hooray animatino or
                  * move the place holder
                  */
-                console.log('onMouseUp: pjs.played.length = ' + pjs.played.length + '; pjs.complete = ' + pjs.complete);
+                if (console && console.log) console.log('onMouseUp: pjs.played.length = ' + pjs.played.length + '; pjs.complete = ' + pjs.complete);
                 if (pjs.played.length === pjs.complete) {
                     pjs.placeHolder.setVisible(false);
                     pjs.star = pjs.createHooray(pjs.patternPath.position);
@@ -505,7 +505,7 @@ var pjs = {
     },
     
     mouseDown: function(event) {
-        console.log("pjs.mouseDown pjs.currBall="+pjs.currBall + "; pjs.anim = " + pjs.anim);
+        if (console && console.log) console.log("pjs.mouseDown pjs.currBall="+pjs.currBall + "; pjs.anim = " + pjs.anim);
         /*
          * can't do anything until the animation is done
          */
