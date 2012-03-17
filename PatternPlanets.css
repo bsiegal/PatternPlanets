@@ -47,7 +47,7 @@ h1 {
     text-align: center;
 }
 
-button {    
+button, select {    
     padding: 5px;
 }
 
