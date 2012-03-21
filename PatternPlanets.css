@@ -22,7 +22,11 @@ h1 {
 
 .rightMenu {
     position: absolute;
-    right: 0px;
+    right: 30px;
+}
+
+.title {
+    text-align: center;
 }
 
 #instruct {
