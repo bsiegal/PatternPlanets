@@ -26,13 +26,19 @@ var PatternPlanets = {
 
         if ((navigator.userAgent.match(/iPhone/i)) || 
                 (navigator.userAgent.match(/iPad/i))) {
-            PatternPlanets.mobile = true;
-        }
-        if (PatternPlanets.mobile) {
+            PatternPlanets.iPad = true;
             $('.mobile').css({'display': 'block'});
             $('.browser').css({'display': 'none'});
+            PatternPlanets.noSound = true;
+        }
+        if (navigator.userAgent.match(/Android/i))  {
+            PatternPlanets.noSound = true;
         }
         
+        if ($('#PatternPlanetsCanvas').width() < 400 || $('#PatternPlanetsCanvas').height() < 200) {
+            $('body').addClass('handHeld');            
+        }
+
         $('html').click(function() {
             if ($('#about').is(':visible')) {
                 $('#about').slideUp();
@@ -71,7 +77,7 @@ var PatternPlanets = {
     },
     
     playSound: function(file) {
-        if (!PatternPlanets.mobile) {
+        if (!PatternPlanets.noSound) {
             var soundHandle = document.getElementById('soundHandle');
             if (soundHandle && soundHandle.play) {
                 soundHandle.src = 'sounds/' + file;

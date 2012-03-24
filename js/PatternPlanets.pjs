@@ -16,7 +16,7 @@
  *
  ******************************************************************************/
 
-var RADIUS = 50;
+var RADIUS = view.size.height < 200 || view.size.width < 400 ? 25 : 50;
 var RAINBOW = [1, 0.0835, 0.167, 0.33, 0.67, 0.83];
 var RAINBOW_KEYS = [['R','r','1'], ['O','o','2'], ['Y','y','3'], ['G','g','4'], ['B','b','5'], ['P','p','V','v','6']];
 var CONTRAST_COLOR = 'gray'; //'#CFCDC6';
@@ -72,7 +72,7 @@ function PlaceHolder(/* Point */point) {
         text.strokeColor = circle.strokeColor;
         text.strokeWidth = circle.strokeWidth;
         text.content = '?';
-        text.characterStyle = {fontSize: 50, fillColor: circle.strokeColor};
+        text.characterStyle = {fontSize: RADIUS, fillColor: circle.strokeColor};
         text.paragraphStyle.justification = 'center';
         text.position = text.position + new Point(0, text.characterStyle.fontSize / 2);
         
@@ -587,7 +587,7 @@ function onMouseDown(event) {
 }
 
 function onMouseDrag(event) {
-    if (PatternPlanets.mobile) {
+    if (PatternPlanets.iPad) {
         /*
          * The touch events don't perform
          * as well, so not drag on mobile
@@ -599,7 +599,7 @@ function onMouseDrag(event) {
 
 function onMouseUp(event) {
     if (pjs.currBall && !pjs.anim) {
-        if (PatternPlanets.mobile) {
+        if (PatternPlanets.iPad) {
             /*
              * The touch events don't perform
              * as well, so on mobile, you don't need to

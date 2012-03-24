@@ -4,6 +4,10 @@ body {
     font-size: medium;
 }
 
+body.handHeld {
+    font-size: small;
+}
+
 h1 {
     text-align: center;
 }
@@ -14,10 +18,18 @@ h1 {
     margin-bottom: 20px;
 }
 
+.handHeld #title {
+    margin-bottom: 10px;
+}
+
 #title span {
     font-size: 32px;
     font-weight: bold;
     text-align: center;
+}
+
+.handHeld #title span {
+    font-size: small;
 }
 
 .rightMenu {
@@ -34,8 +46,16 @@ h1 {
     margin-bottom: 10px;
 }
 
+.handHeld #instruct {
+    margin-bottom: 5px;
+}
+
 #PatternPlanetsCanvas {
     padding: 5px;
+}
+
+.handHeld #PatternPlanetsCanvas {
+    padding: 10px;
 }
 
 .success {
@@ -44,6 +64,15 @@ h1 {
     text-align: center;
     color: black;
 }
+
+.handHeld .success {
+    font-size: 9px;
+    background-color: #FFF44F;
+    opacity: 0.5;
+    padding: 4px;
+    border-radius: 4px;
+}
+
 
 #buttonBar {
     position: absolute;
@@ -78,6 +107,10 @@ a, a:visited {
     font-style: italic;
     color: lightblue;
     font-size: medium;
+}
+
+.handHeld a {
+    font-size: small;
 }
 
 .mobile {
