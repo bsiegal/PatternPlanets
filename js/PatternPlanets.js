@@ -30,8 +30,7 @@ var PatternPlanets = {
             $('.mobile').css({'display': 'block'});
             $('.browser').css({'display': 'none'});
             PatternPlanets.noSound = true;
-        }
-        if (navigator.userAgent.match(/Android/i))  {
+        } else if (navigator.userAgent.match(/Android/i))  {
             PatternPlanets.noSound = true;
         }
         
