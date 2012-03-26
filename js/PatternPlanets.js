@@ -34,7 +34,7 @@ var PatternPlanets = {
             PatternPlanets.noSound = true;
         }
         
-        if ($('#PatternPlanetsCanvas').width() < 400 || $('#PatternPlanetsCanvas').height() < 200) {
+        if ($('#PatternPlanetsCanvas').width() < 670 || $('#PatternPlanetsCanvas').height() < 200) {
             $('body').addClass('handHeld');            
         }
 
@@ -66,7 +66,7 @@ var PatternPlanets = {
             div.fadeIn();
             var canvasPos = $('#PatternPlanetsCanvas').offset();
             var top = canvasPos.top + y - div.height() / 2;
-            var left = canvasPos.left + (x - div.width() / 2) + 10;
+            var left = canvasPos.left / 2 + (x - div.width() / 2);
             div.css('top', top + 'px');
             div.css('left', left + 'px');
             $('#again').focus();
@@ -80,8 +80,7 @@ var PatternPlanets = {
             var soundHandle = document.getElementById('soundHandle');
             if (soundHandle && soundHandle.play) {
                 soundHandle.src = 'sounds/' + file;
-                soundHandle.play();                   
-                console.log('played ' + file);
+                soundHandle.play();             
             }            
         }
     },
