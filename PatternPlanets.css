@@ -37,6 +37,10 @@ h1 {
     right: 30px;
 }
 
+.handHeld .rightMenu {
+    right: 0px;
+}
+
 .title {
     text-align: center;
 }
@@ -105,6 +109,11 @@ button, select {
     text-align: left; 
 }
 
+.handHeld #about {
+    right: 0px;
+    width: auto;
+}
+
 a, a:visited {
     text-decoration: none;
     font-style: italic;
@@ -116,6 +125,11 @@ a, a:visited {
     font-size: small;
 }
 
-.mobile {
+.handHeld #about {
+    right: 0px;
+    width: auto;
+}
+
+.iPad {
     display: none;
 }

@@ -27,7 +27,7 @@ var PatternPlanets = {
         if ((navigator.userAgent.match(/iPhone/i)) || 
                 (navigator.userAgent.match(/iPad/i))) {
             PatternPlanets.iPad = true;
-            $('.mobile').css({'display': 'block'});
+            $('.iPad').css({'display': 'block'});
             $('.browser').css({'display': 'none'});
             PatternPlanets.noSound = true;
         } else if (navigator.userAgent.match(/Android/i))  {
