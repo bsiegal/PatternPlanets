@@ -547,7 +547,7 @@ var pjs = {
     },
     
     consoleLog: function(msg) {
-        if (console && console.log) {
+        if (PatternPlanets.debug && console && console.log) {
             console.log(msg);
         }
     }

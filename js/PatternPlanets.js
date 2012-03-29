@@ -17,6 +17,7 @@
  ******************************************************************************/
 
 var PatternPlanets = {
+    debug: false,
     level: 2, /* lowest level */
     mode: 'random',
     
