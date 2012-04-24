@@ -37,6 +37,8 @@ var PatternPlanets = {
         
         if ($('#PatternPlanetsCanvas').width() < 670 || $('#PatternPlanetsCanvas').height() < 200) {
             $('body').addClass('handHeld');            
+        } else {
+            $('body').removeClass('handHeld');
         }
 
         $('html').click(function() {
