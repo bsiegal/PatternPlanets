@@ -47,7 +47,6 @@ function Ball(/* Point */point, /* float */hue) {
                 this.point + this.radius, overlayPos);
         var overlay = new Path.Circle(overlayPos, this.radius / 100);
         var overlayColor = color.clone();
-        var fullOverlay = color.clone();
         overlayColor.alpha = 0.5;
         var overlayGradient = new Gradient([new RgbColor(1, 1, 1, 0.5), new RgbColor(1, 1, 1, 1)]);
         overlay.fillColor = new GradientColor(overlayGradient, overlayPos, overlayPos + this.radius / 2);
@@ -316,7 +315,7 @@ var pjs = {
          *  _ _
          * |_ _|  where each line is a pattLen
          */
-        var total = pattLen * 6;
+        
         /*
          * width of the rectangle is 2 * pattLen * RADIUS * 2
          * height of the rectangle is 1 * pattLen * RADIUS * 2
