@@ -89,19 +89,19 @@ var PatternPlanets = {
     },
     
     playHooray: function() {
-        PatternPlanets.playSound('yaahooo.wav');
+        PatternPlanets.playSound('ppHooray.wav');
     },
  
     playValid: function() {
-        PatternPlanets.playSound('pluck.wav');
+        PatternPlanets.playSound('ppValid.wav');
     },
     
     playMiss: function() {
-        PatternPlanets.playSound('thunk.wav');
+        PatternPlanets.playSound('ppMiss.wav');
     },
     
     playInvalid: function() {
-        PatternPlanets.playSound('boing2.wav');
+        PatternPlanets.playSound('ppInvalid.wav');
     },
     
     about: function(show) {
